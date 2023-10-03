@@ -3,9 +3,10 @@ from tkinter import *
 from PIL import Image
 import requests
 import os
+from urllib.parse import urlparse
 
 ctk.set_default_color_theme('blue')
-appWidth, appHeight = 650, 400
+appWidth, appHeight = 650, 450
 current_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Assets')
 
 
@@ -14,7 +15,7 @@ class Window(ctk.CTk):
         super().__init__(*args, **kwargs)
 
         self.geometry(f'{appWidth}x{appHeight}')
-        self.resizable(False, False)
+        # self.resizable(False, False)
         self.title('SwiftShare')
         self.iconbitmap('Assets/url-icon.ico')
 
@@ -135,20 +136,21 @@ class HomeFrame(ctk.CTkFrame):
 
         # Create labels
         self.link_entry_label = ctk.CTkLabel(self, text='  Insert a long URL', image=self.link_icon,
-                                             text_color=('gray10', 'gray90'), compound='left')
+                                             font=('montserrat', 14), text_color=('gray10', 'gray90'),
+                                             compound='left')
         self.link_entry_label.grid(row=1, column=0, padx=10, pady=10, sticky='w')
 
-        self.error_entry_label = ctk.CTkLabel(self, text='The URL field is required.',
-                                              font=('montserrat', 12), text_color='red', )
+        self.error_entry_label = ctk.CTkLabel(self, text='', font=('montserrat', 12), text_color='#D80032', )
         self.error_entry_label.grid(row=3, column=0, padx=10, pady=(0, 10), sticky='w')
 
         self.shorten_link_entry_label = ctk.CTkLabel(self, text='  New Shorten URL', image=self.link_icon,
-                                                     text_color=('gray10', 'gray90'), compound='left')
+                                                     font=('montserrat', 14), text_color=('gray10', 'gray90'),
+                                                     compound='left')
         self.shorten_link_entry_label.grid(row=4, column=0, padx=10, pady=10, sticky='w')
 
         # Create Entry Widget for Long Link
         self.long_link_entry = ctk.CTkEntry(self, placeholder_text='Enter a long link here...',
-                                            font=('montserrat', 14), height=40)
+                                            font=('montserrat', 14), height=40,)
         self.long_link_entry.grid(row=2, column=0, padx=10, sticky='ew')
 
         # Create Entry Widget for Shorten Link
@@ -167,9 +169,9 @@ class HomeFrame(ctk.CTkFrame):
                                          command=self.copy_button_event)
         self.copy_button.grid(row=5, column=1, padx=(0, 10), sticky='e')
 
-        self.shorten_button = ctk.CTkButton(self, text='Shorten URL', font=('helvetica', 18, 'bold'),
-                                            corner_radius=32)
-        self.shorten_button.grid(row=6, column=0, columnspan=2, padx=20, pady=20)
+        self.shorten_button = ctk.CTkButton(self, text='Shorten URL', font=('helvetica', 12, 'bold'),
+                                            corner_radius=32, command=self.shorten_button_event)
+        self.shorten_button.grid(row=3, column=0, columnspan=2, padx=(0, 10), pady=10, sticky='e')
 
     # Create a Paste Button Function
     def paste_button_event(self):
@@ -189,6 +191,38 @@ class HomeFrame(ctk.CTkFrame):
         self.clipboard_clear()
         self.clipboard_append(copied_text)
         self.update()
+
+    # Let's Validate first the long link entry widget entry
+    def has_input_and_valid(self, url):
+        if len(url) != 0:
+            parsed_url = urlparse(url)
+            if parsed_url.scheme and parsed_url.netloc:
+                checked_url_status = requests.get(url)
+                if checked_url_status.status_code == 200:
+                    self.error_entry_label.configure(text='')
+                    self.long_link_entry.configure(border_color=('#979DA2', '#565B5E'))
+                    return True
+                else:
+                    self.error_entry_label.configure(text=f'HTTP Status Code: {checked_url_status.status_code}.')
+                    self.long_link_entry.configure(border_color='red')
+                    return False
+            else:
+                self.error_entry_label.configure(text='Invalid URL.')
+                self.long_link_entry.configure(border_color='red')
+                return False
+        else:
+            self.error_entry_label.configure(text='The URL field is required.')
+            self.long_link_entry.configure(border_color='red')
+            return False
+
+    def shorten_button_event(self):
+        base_url = 'http://tinyurl.com/api-create.php?url='
+        url_to_shorten = self.long_link_entry.get()
+        if self.has_input_and_valid(url_to_shorten):
+            response = requests.get(base_url + url_to_shorten)
+            self.short_link_entry.delete(0, 'end')
+            self.short_link_entry.insert(0, response.text)
+        return
 
 
 class HistoryFrame(ctk.CTkFrame):
