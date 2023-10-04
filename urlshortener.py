@@ -1,10 +1,11 @@
 import customtkinter as ctk
 from tkinter import *
-from PIL import Image, ImageTk
+from PIL import Image
 import requests
 import os
 from urllib.parse import urlparse
 import qrcode
+import webbrowser
 
 ctk.set_default_color_theme('blue')
 appWidth, appHeight = 650, 450
@@ -157,8 +158,9 @@ class HomeFrame(ctk.CTkFrame):
         self.error_qrcode_label.grid(row=6, column=0, padx=10, pady=(0, 10), sticky='w')
 
         self.github_label = ctk.CTkLabel(self, text='Made with ❤ by Clarence Sarmiento', cursor='hand2',
-                                         font=('montserrat', 12, 'underline'), text_color=('gray10', 'gray90'))
+                                         font=('montserrat', 12, 'underline'), text_color="#068FFF")
         self.github_label.grid(row=8, column=0, columnspan=2, padx=10, pady=10, sticky='ew')
+        self.github_label.bind('<Button-1>', lambda event: self.open_github_link())
 
         # Create Entry Widget for Long Link
         self.long_link_entry = ctk.CTkEntry(self, placeholder_text='Enter a long link here...',
@@ -267,6 +269,10 @@ class HomeFrame(ctk.CTkFrame):
             self.toplevel_window = QRCodeWindow(self, qr_image=qr_img)
         else:
             self.toplevel_window.focus()
+
+    def open_github_link(self):
+        github_link = 'https://github.com/clarencesarmiento'
+        webbrowser.open_new(github_link)
 
 
 class HistoryFrame(ctk.CTkFrame):
