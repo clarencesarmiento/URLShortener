@@ -1,9 +1,10 @@
 import customtkinter as ctk
 from tkinter import *
-from PIL import Image
+from PIL import Image, ImageTk
 import requests
 import os
 from urllib.parse import urlparse
+import qrcode
 
 ctk.set_default_color_theme('blue')
 appWidth, appHeight = 650, 450
@@ -113,9 +114,13 @@ class NavigationFrame(ctk.CTkFrame):
 class HomeFrame(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
+        self.toplevel_window = None
 
         # Configure Home Frame Columns
         self.columnconfigure(0, weight=1)
+
+        # Configure Home Frame Row
+        self.rowconfigure(7, weight=1)
 
         # Load and Insert Icons
         self.link_icon = ctk.CTkImage(light_image=Image.open(os.path.join(current_path, 'link-dark.png')),
@@ -148,9 +153,16 @@ class HomeFrame(ctk.CTkFrame):
                                                      compound='left')
         self.shorten_link_entry_label.grid(row=4, column=0, padx=10, pady=10, sticky='w')
 
+        self.error_qrcode_label = ctk.CTkLabel(self, text='', font=('montserrat', 12), text_color='#D80032', )
+        self.error_qrcode_label.grid(row=6, column=0, padx=10, pady=(0, 10), sticky='w')
+
+        self.github_label = ctk.CTkLabel(self, text='Made with ❤ by Clarence Sarmiento', cursor='hand2',
+                                         font=('montserrat', 12, 'underline'), text_color=('gray10', 'gray90'))
+        self.github_label.grid(row=8, column=0, columnspan=2, padx=10, pady=10, sticky='ew')
+
         # Create Entry Widget for Long Link
         self.long_link_entry = ctk.CTkEntry(self, placeholder_text='Enter a long link here...',
-                                            font=('montserrat', 14), height=40,)
+                                            font=('montserrat', 14), height=40, )
         self.long_link_entry.grid(row=2, column=0, padx=10, sticky='ew')
 
         # Create Entry Widget for Shorten Link
@@ -169,9 +181,15 @@ class HomeFrame(ctk.CTkFrame):
                                          command=self.copy_button_event)
         self.copy_button.grid(row=5, column=1, padx=(0, 10), sticky='e')
 
+        # Create Shorten Button
         self.shorten_button = ctk.CTkButton(self, text='Shorten URL', font=('helvetica', 12, 'bold'),
                                             corner_radius=32, command=self.shorten_button_event)
         self.shorten_button.grid(row=3, column=0, columnspan=2, padx=(0, 10), pady=10, sticky='e')
+
+        # Create Button to Generate QR code for the shortened URL
+        self.gen_qrcode_button = ctk.CTkButton(self, text='QR Code', font=('helvetica', 12, 'bold'),
+                                               corner_radius=32, command=self.gen_qrcode_button_event)
+        self.gen_qrcode_button.grid(row=6, column=0, columnspan=2, padx=(0, 10), pady=10, sticky='e')
 
     # Create a Paste Button Function
     def paste_button_event(self):
@@ -194,26 +212,28 @@ class HomeFrame(ctk.CTkFrame):
 
     # Let's Validate first the long link entry widget entry
     def has_input_and_valid(self, url):
-        if len(url) != 0:
+        if url:
             parsed_url = urlparse(url)
             if parsed_url.scheme and parsed_url.netloc:
-                checked_url_status = requests.get(url)
-                if checked_url_status.status_code == 200:
-                    self.error_entry_label.configure(text='')
-                    self.long_link_entry.configure(border_color=('#979DA2', '#565B5E'))
-                    return True
-                else:
-                    self.error_entry_label.configure(text=f'HTTP Status Code: {checked_url_status.status_code}.')
+                try:
+                    checked_url_status = requests.get(url)
+                    if checked_url_status.status_code == 200:
+                        self.error_entry_label.configure(text='')
+                        self.long_link_entry.configure(border_color=('#979DA2', '#565B5E'))
+                        return True
+                    else:
+                        self.error_entry_label.configure(text=f'HTTP Status Code: {checked_url_status.status_code}.')
+                        self.long_link_entry.configure(border_color='red')
+                except requests.RequestException:
+                    self.error_entry_label.configure(text='Invalid URL.')
                     self.long_link_entry.configure(border_color='red')
-                    return False
             else:
-                self.error_entry_label.configure(text='Invalid URL.')
+                self.error_entry_label.configure(text='Should have https://')
                 self.long_link_entry.configure(border_color='red')
-                return False
         else:
             self.error_entry_label.configure(text='The URL field is required.')
             self.long_link_entry.configure(border_color='red')
-            return False
+        return False
 
     def shorten_button_event(self):
         base_url = 'http://tinyurl.com/api-create.php?url='
@@ -223,6 +243,30 @@ class HomeFrame(ctk.CTkFrame):
             self.short_link_entry.delete(0, 'end')
             self.short_link_entry.insert(0, response.text)
         return
+
+    def gen_qrcode_button_event(self):
+        data = self.short_link_entry.get()
+        if not data:
+            self.error_qrcode_label.configure(text='No data to generate to QRCode.')
+            return
+
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=2,
+        )
+        qr.add_data(data)
+        qr.make(fit=True)
+
+        img = qr.make_image(fill_color="black", back_color="white")
+
+        qr_img = ctk.CTkImage(img.get_image(), size=(256, 256))
+
+        if self.toplevel_window is None or not self.toplevel_window.winfo_exists():
+            self.toplevel_window = QRCodeWindow(self, qr_image=qr_img)
+        else:
+            self.toplevel_window.focus()
 
 
 class HistoryFrame(ctk.CTkFrame):
@@ -235,6 +279,23 @@ class HistoryFrame(ctk.CTkFrame):
         self.frame_label = ctk.CTkLabel(self, text='No Content Yet', font=('monsterrat', 18, 'bold'),
                                         text_color=('gray10', 'gray90'))
         self.frame_label.grid(row=0, column=0, padx=20, pady=20, sticky='ew')
+
+
+class QRCodeWindow(ctk.CTkToplevel):
+    def __init__(self, master, qr_image, **kwargs):
+        super().__init__(master, **kwargs)
+        self.title('Generated QR Code')
+        self.resizable(False, False)
+
+        self.qrcode_image_label = ctk.CTkLabel(self, text='', image=qr_image)
+        self.qrcode_image_label.grid(row=0, column=0, padx=10, pady=10, sticky='nsew')
+
+        self.download_button = ctk.CTkButton(self, text='Download QR Code', font=('helvetica', 12, 'bold'),
+                                             corner_radius=32, command=self.download_button_event)
+        self.download_button.grid(row=1, column=0, padx=10, pady=(0, 10))
+
+    def download_button_event(self):
+        pass
 
 
 if __name__ == '__main__':
