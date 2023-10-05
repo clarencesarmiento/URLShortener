@@ -28,7 +28,7 @@ class Window(ctk.CTk):
         self.rowconfigure(0, weight=1)
 
         # Create Frame Objects
-        self.home_frame = HomeFrame(self, None, corner_radius=0, fg_color=('#dee2e6', '#343a40'))
+        self.home_frame = HomeFrame(self, corner_radius=0, fg_color=('#dee2e6', '#343a40'))
 
         self.history_frame = HistoryFrame(self, corner_radius=0, fg_color=('#dee2e6', '#343a40'))
 
@@ -116,7 +116,7 @@ class NavigationFrame(ctk.CTkFrame):
 
 
 class HomeFrame(ctk.CTkFrame):
-    def __init__(self, history_frame, master, **kwargs):
+    def __init__(self, master, history_frame=None, **kwargs):
         super().__init__(master, **kwargs)
         self.toplevel_window = None
         self.history_frame = history_frame
@@ -242,7 +242,7 @@ class HomeFrame(ctk.CTkFrame):
         return False
 
     # Create a Shorten Button Function
-    def shorten_button_event(self,):
+    def shorten_button_event(self, ):
         base_url = 'http://tinyurl.com/api-create.php?url='
         url_to_shorten = self.long_link_entry.get()
         if self.has_input_and_valid(url_to_shorten):
@@ -305,6 +305,9 @@ class HistoryFrame(ctk.CTkFrame):
         self.scrollable_frame.columnconfigure(0, weight=1)
 
     def add_item_frame(self, url_name, url_short):
+        copy_icon = ctk.CTkImage(light_image=Image.open(os.path.join(current_path, 'copy-dark.png')),
+                                 dark_image=Image.open(os.path.join(current_path, 'copy-light.png')),
+                                 size=(20, 20))
         current_time = datetime.now().time()
         formatted_time = current_time.strftime('%I:%M:%S %p')
 
@@ -326,6 +329,11 @@ class HistoryFrame(ctk.CTkFrame):
         button = ctk.CTkButton(frame, text='Delete', command=lambda: self.delete_item_frame(frame))
         button.grid(row=1, column=1, padx=10, pady=(0, 10), sticky='e')
 
+        copy_button = ctk.CTkButton(self, text='', image=copy_icon, width=0,
+                                    fg_color='transparent', hover_color=('gray70', 'gray30'), compound='left',
+                                    command=lambda: self.copy_button_event(url_short_label))
+        copy_button.grid(row=1, column=0, padx=10, pady=(0, 10), sticky='e')
+
         self.frame_list.append({'frame': frame,
                                 'url_name': url_name_label,
                                 'url_short_label': url_short_label,
@@ -343,6 +351,14 @@ class HistoryFrame(ctk.CTkFrame):
     def update_scrollable_frame(self):
         for i, frame in enumerate(reversed(self.frame_list)):
             frame['frame'].grid(row=i, column=0, pady=(0, 10), sticky='ew')
+
+    def copy_button_event(self, label):
+        copied_text = label.cget('text')
+
+        # Put the text in the clipboard
+        self.clipboard_clear()
+        self.clipboard_append(copied_text)
+        self.update()
 
 
 class QRCodeWindow(ctk.CTkToplevel):
