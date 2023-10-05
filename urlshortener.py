@@ -177,13 +177,13 @@ class HomeFrame(ctk.CTkFrame):
 
         # Create Paste Button to paste copied URL from clipboard
         self.paste_button = ctk.CTkButton(self, text='', image=self.paste_icon, width=0,
-                                          fg_color='transparent', hover_color=('gray70', 'gray30'), compound='left',
+                                          fg_color='transparent', hover_color=('gray70', 'gray30'),
                                           command=self.paste_button_event)
         self.paste_button.grid(row=2, column=1, padx=(0, 10), sticky='e')
 
         # Create Copy Button to copy the shortened URL to clipboard
         self.copy_button = ctk.CTkButton(self, text='', image=self.copy_icon, width=0,
-                                         fg_color='transparent', hover_color=('gray70', 'gray30'), compound='left',
+                                         fg_color='transparent', hover_color=('gray70', 'gray30'),
                                          command=self.copy_button_event)
         self.copy_button.grid(row=5, column=1, padx=(0, 10), sticky='e')
 
@@ -304,14 +304,25 @@ class HistoryFrame(ctk.CTkFrame):
         self.scrollable_frame.grid(row=1, column=0, columnspan=2, padx=10, pady=(0, 10), sticky='nsew')
         self.scrollable_frame.columnconfigure(0, weight=1)
 
+        self.no_url_label = ctk.CTkLabel(self.scrollable_frame, text='No recent URLs in your History', font=('monsterrat', 16, 'bold'))
+        if len(self.frame_list) == 0:
+            self.no_url_label.grid(row=0, column=0, columnspan=2, padx=20, pady=20, sticky='ew')
+        else:
+            self.no_url_label.grid_forget()
+
     def add_item_frame(self, url_name, url_short):
         copy_icon = ctk.CTkImage(light_image=Image.open(os.path.join(current_path, 'copy-dark.png')),
                                  dark_image=Image.open(os.path.join(current_path, 'copy-light.png')),
                                  size=(20, 20))
-        current_time = datetime.now().time()
-        formatted_time = current_time.strftime('%I:%M:%S %p')
 
-        frame = ctk.CTkFrame(self.scrollable_frame, border_color='green', border_width=2, )
+        delete_icon = ctk.CTkImage(light_image=Image.open(os.path.join(current_path, 'trash-dark.png')),
+                                   dark_image=Image.open(os.path.join(current_path, 'trash-light.png')),
+                                   size=(20, 20))
+
+        current_time = datetime.now().time()
+        formatted_time = current_time.strftime('%I:%M %p')
+
+        frame = ctk.CTkFrame(self.scrollable_frame, border_color='#228be6', border_width=2, )
         frame.columnconfigure(0, weight=1)
         frame.grid(row=len(self.frame_list), column=0, pady=(0, 10), sticky='ew')
 
@@ -319,25 +330,24 @@ class HistoryFrame(ctk.CTkFrame):
                                       text_color=('gray10', 'gray90'))
         url_name_label.grid(row=0, column=0, padx=10, pady=10, sticky='w')
 
-        time_label = ctk.CTkLabel(frame, text=f'{formatted_time}',
+        time_label = ctk.CTkLabel(frame, text=f'{formatted_time}', font=('monsterrat', 10),
                                   text_color=('gray10', 'gray90'))
         time_label.grid(row=0, column=1, padx=10, pady=10, sticky='e')
 
-        url_short_label = ctk.CTkLabel(frame, text=f'{url_short}')
+        url_short_label = ctk.CTkLabel(frame, text=f'{url_short}', font=('monsterrat', 12),
+                                       text_color=('gray10', 'gray90'))
         url_short_label.grid(row=1, column=0, padx=10, pady=(0, 10), sticky='w')
 
-        button = ctk.CTkButton(frame, text='Delete', command=lambda: self.delete_item_frame(frame))
-        button.grid(row=1, column=1, padx=10, pady=(0, 10), sticky='e')
+        delete_button = ctk.CTkButton(frame, text='', image=delete_icon, fg_color='#fa5252', hover_color='#e03131',
+                                      width=0, command=lambda: self.delete_item_frame(frame))
+        delete_button.grid(row=1, column=1, padx=10, pady=(0, 10), sticky='e')
 
-        copy_button = ctk.CTkButton(self, text='', image=copy_icon, width=0,
-                                    fg_color='transparent', hover_color=('gray70', 'gray30'), compound='left',
+        copy_button = ctk.CTkButton(frame, text='', image=copy_icon, width=0,
+                                    fg_color='transparent', hover_color=('gray70', 'gray30'),
                                     command=lambda: self.copy_button_event(url_short_label))
-        copy_button.grid(row=1, column=0, padx=10, pady=(0, 10), sticky='e')
+        copy_button.grid(row=1, column=0, pady=(0, 10), sticky='e')
 
-        self.frame_list.append({'frame': frame,
-                                'url_name': url_name_label,
-                                'url_short_label': url_short_label,
-                                'button': button}, )
+        self.frame_list.append({'frame': frame})
         self.update_scrollable_frame()
 
     def delete_item_frame(self, item_frame):
