@@ -6,6 +6,7 @@ import os
 from urllib.parse import urlparse
 import qrcode
 import webbrowser
+from datetime import datetime
 
 ctk.set_default_color_theme('blue')
 appWidth, appHeight = 650, 450
@@ -27,9 +28,11 @@ class Window(ctk.CTk):
         self.rowconfigure(0, weight=1)
 
         # Create Frame Objects
-        self.home_frame = HomeFrame(self, corner_radius=0, fg_color=('#dee2e6', '#343a40'))
+        self.home_frame = HomeFrame(self, None, corner_radius=0, fg_color=('#dee2e6', '#343a40'))
 
         self.history_frame = HistoryFrame(self, corner_radius=0, fg_color=('#dee2e6', '#343a40'))
+
+        self.home_frame.history_frame = self.history_frame
 
         self.nav_frame = NavigationFrame(self, home_frame=self.home_frame, history_frame=self.history_frame,
                                          corner_radius=0, )
@@ -113,9 +116,10 @@ class NavigationFrame(ctk.CTkFrame):
 
 
 class HomeFrame(ctk.CTkFrame):
-    def __init__(self, master, **kwargs):
+    def __init__(self, history_frame, master, **kwargs):
         super().__init__(master, **kwargs)
         self.toplevel_window = None
+        self.history_frame = history_frame
 
         # Configure Home Frame Columns
         self.columnconfigure(0, weight=1)
@@ -237,15 +241,18 @@ class HomeFrame(ctk.CTkFrame):
             self.long_link_entry.configure(border_color='red')
         return False
 
-    def shorten_button_event(self):
+    # Create a Shorten Button Function
+    def shorten_button_event(self,):
         base_url = 'http://tinyurl.com/api-create.php?url='
         url_to_shorten = self.long_link_entry.get()
         if self.has_input_and_valid(url_to_shorten):
             response = requests.get(base_url + url_to_shorten)
             self.short_link_entry.delete(0, 'end')
             self.short_link_entry.insert(0, response.text)
+            self.history_frame.add_item_frame(url_name=urlparse(url_to_shorten).netloc, url_short=response.text)
         return
 
+    # Create Generate QRCode Button Function
     def gen_qrcode_button_event(self):
         data = self.short_link_entry.get()
         if not data:
@@ -265,12 +272,15 @@ class HomeFrame(ctk.CTkFrame):
 
         qr_img = ctk.CTkImage(img.get_image(), size=(256, 256))
 
+        # Display the generated QRcode in another window
         if self.toplevel_window is None or not self.toplevel_window.winfo_exists():
             self.toplevel_window = QRCodeWindow(self, qr_image=qr_img)
         else:
             self.toplevel_window.focus()
 
-    def open_github_link(self):
+    # Create a clickable link for gitHub
+    @staticmethod
+    def open_github_link():
         github_link = 'https://github.com/clarencesarmiento'
         webbrowser.open_new(github_link)
 
@@ -278,13 +288,61 @@ class HomeFrame(ctk.CTkFrame):
 class HistoryFrame(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
+        self.frame_list = []
 
         # Configure History Frame Column
         self.columnconfigure(0, weight=1)
 
-        self.frame_label = ctk.CTkLabel(self, text='No Content Yet', font=('monsterrat', 18, 'bold'),
+        # Configure History Frame Row
+        self.rowconfigure(1, weight=1)
+
+        self.frame_label = ctk.CTkLabel(self, text='My URLs', font=('monsterrat', 18, 'bold'),
                                         text_color=('gray10', 'gray90'))
-        self.frame_label.grid(row=0, column=0, padx=20, pady=20, sticky='ew')
+        self.frame_label.grid(row=0, column=0, columnspan=2, padx=20, pady=20, sticky='ew')
+
+        self.scrollable_frame = ctk.CTkScrollableFrame(self)
+        self.scrollable_frame.grid(row=1, column=0, columnspan=2, padx=10, pady=(0, 10), sticky='nsew')
+        self.scrollable_frame.columnconfigure(0, weight=1)
+
+    def add_item_frame(self, url_name, url_short):
+        current_time = datetime.now().time()
+        formatted_time = current_time.strftime('%I:%M:%S %p')
+
+        frame = ctk.CTkFrame(self.scrollable_frame, border_color='green', border_width=2, )
+        frame.columnconfigure(0, weight=1)
+        frame.grid(row=len(self.frame_list), column=0, pady=(0, 10), sticky='ew')
+
+        url_name_label = ctk.CTkLabel(frame, text=f'{url_name}', font=('monsterrat', 16, 'bold'),
+                                      text_color=('gray10', 'gray90'))
+        url_name_label.grid(row=0, column=0, padx=10, pady=10, sticky='w')
+
+        time_label = ctk.CTkLabel(frame, text=f'{formatted_time}',
+                                  text_color=('gray10', 'gray90'))
+        time_label.grid(row=0, column=1, padx=10, pady=10, sticky='e')
+
+        url_short_label = ctk.CTkLabel(frame, text=f'{url_short}')
+        url_short_label.grid(row=1, column=0, padx=10, pady=(0, 10), sticky='w')
+
+        button = ctk.CTkButton(frame, text='Delete', command=lambda: self.delete_item_frame(frame))
+        button.grid(row=1, column=1, padx=10, pady=(0, 10), sticky='e')
+
+        self.frame_list.append({'frame': frame,
+                                'url_name': url_name_label,
+                                'url_short_label': url_short_label,
+                                'button': button}, )
+        self.update_scrollable_frame()
+
+    def delete_item_frame(self, item_frame):
+        for frame in self.frame_list:
+            if frame['frame'] == item_frame:
+                item_frame.destroy()
+                self.frame_list.remove(frame)
+                self.update_scrollable_frame()
+                break
+
+    def update_scrollable_frame(self):
+        for i, frame in enumerate(reversed(self.frame_list)):
+            frame['frame'].grid(row=i, column=0, pady=(0, 10), sticky='ew')
 
 
 class QRCodeWindow(ctk.CTkToplevel):
