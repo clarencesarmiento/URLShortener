@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from tkinter import *
+from tkinter import filedialog, messagebox
 from PIL import Image
 import requests
 import os
@@ -18,7 +19,7 @@ class Window(ctk.CTk):
         super().__init__(*args, **kwargs)
 
         self.geometry(f'{appWidth}x{appHeight}')
-        # self.resizable(False, False)
+        self.resizable(False, False)
         self.title('SwiftShare')
         self.iconbitmap('Assets/url-icon.ico')
 
@@ -39,6 +40,7 @@ class Window(ctk.CTk):
                                          corner_radius=0, )
         self.nav_frame.grid(row=0, column=0, sticky='nsew')
 
+        # Run the Application
         self.mainloop()
 
 
@@ -105,12 +107,15 @@ class NavigationFrame(ctk.CTkFrame):
         else:
             self.history_frame.grid_forget()
 
+    # Create a Home Button Event Function
     def home_button_event(self):
         self.select_frame_by_name('home')
 
+    # Create a History Button Event Function
     def history_button_event(self):
         self.select_frame_by_name('myurls')
 
+    # Create a Change Appearance Mode Event Function
     @staticmethod
     def change_appearance_mode_event(new_appearnce_mode):
         ctk.set_appearance_mode(new_appearnce_mode)
@@ -248,8 +253,10 @@ class HomeFrame(ctk.CTkFrame):
         url_to_shorten = self.long_link_entry.get().strip()
         if self.has_input_and_valid(url_to_shorten):
             response = requests.get(base_url + url_to_shorten)
+            self.short_link_entry.configure(state='normal')
             self.short_link_entry.delete(0, 'end')
             self.short_link_entry.insert(0, response.text)
+            self.short_link_entry.configure(state='disable')
             self.history_frame.add_item_frame(url_name=urlparse(url_to_shorten).netloc, url_short=response.text)
         return
 
@@ -275,7 +282,7 @@ class HomeFrame(ctk.CTkFrame):
 
         # Display the generated QRcode in another window
         if self.toplevel_window is None or not self.toplevel_window.winfo_exists():
-            self.toplevel_window = QRCodeWindow(self, qr_image=qr_img)
+            self.toplevel_window = QRCodeWindow(self, qr_ctkimage=qr_img, raw_image=img)
         else:
             self.toplevel_window.focus()
 
@@ -419,19 +426,22 @@ class HistoryFrame(ctk.CTkFrame):
 
         # Display the generated QRcode in another window
         if self.home_frame.toplevel_window is None or not self.home_frame.toplevel_window.winfo_exists():
-            self.home_frame.toplevel_window = QRCodeWindow(self, qr_image=qr_img)
+            self.home_frame.toplevel_window = QRCodeWindow(self, qr_ctkimage=qr_img, raw_image=img)
         else:
             self.home_frame.toplevel_window.destroy()
             self.qr_button_event(label)
 
 
 class QRCodeWindow(ctk.CTkToplevel):
-    def __init__(self, master, qr_image, **kwargs):
+    def __init__(self, master, qr_ctkimage, raw_image, **kwargs):
         super().__init__(master, **kwargs)
+        self.qr_ctkimage = qr_ctkimage
+        self.raw_image = raw_image
+
         self.title('Generated QR Code')
         self.resizable(False, False)
 
-        self.qrcode_image_label = ctk.CTkLabel(self, text='', image=qr_image)
+        self.qrcode_image_label = ctk.CTkLabel(self, text='', image=self.qr_ctkimage)
         self.qrcode_image_label.grid(row=0, column=0, padx=10, pady=10, sticky='nsew')
 
         self.download_button = ctk.CTkButton(self, text='Download QR Code', font=('helvetica', 12, 'bold'),
@@ -439,7 +449,17 @@ class QRCodeWindow(ctk.CTkToplevel):
         self.download_button.grid(row=1, column=0, padx=10, pady=(0, 10))
 
     def download_button_event(self):
-        pass
+        # Get the QR Code raw image
+        qr_image = self.raw_image.get_image()
+
+        # Prompt the user to choose the file path
+        file_path = filedialog.asksaveasfilename(defaultextension='.png', filetypes=[('PNG files', '*.png')])
+
+        if file_path:
+            # Save the PIL Image to the specified file path
+            qr_image.save(file_path)
+
+            messagebox.showinfo(title='QR Code Saved', message='QR Code saved successfully.')
 
 
 if __name__ == '__main__':
