@@ -126,6 +126,7 @@ class HomeFrame(ctk.CTkFrame):
         super().__init__(master, **kwargs)
         self.toplevel_window = None
         self.history_frame = None
+        self.short_url_list = []
 
         # Configure Home Frame Columns
         self.columnconfigure(0, weight=1)
@@ -257,7 +258,9 @@ class HomeFrame(ctk.CTkFrame):
             self.short_link_entry.delete(0, 'end')
             self.short_link_entry.insert(0, response.text)
             self.short_link_entry.configure(state='disable')
-            self.history_frame.add_item_frame(url_name=urlparse(url_to_shorten).netloc, url_short=response.text)
+            if response.text not in self.short_url_list:
+                self.history_frame.add_item_frame(url_name=urlparse(url_to_shorten).netloc, url_short=response.text)
+                self.short_url_list.append(response.text)
         return
 
     # Create Generate QRCode Button Function
@@ -375,16 +378,18 @@ class HistoryFrame(ctk.CTkFrame):
                                       command=lambda: self.delete_button_event(frame))
         delete_button.grid(row=1, column=2, padx=(0, 10), pady=(0, 10), sticky='w')
 
-        self.frame_list.append({'frame': frame})
+        self.frame_list.append({'frame': frame, 'short_url': url_short_label})
         self.update_scrollable_frame()
 
     # Delete Button Function to delete the desired frame
     def delete_button_event(self, item_frame):
         for frame in self.frame_list:
-            if frame['frame'] == item_frame:
+            if frame['frame'] == item_frame and frame['short_url'].cget('text') in self.home_frame.short_url_list:
                 item_frame.destroy()
                 self.frame_list.remove(frame)
+                self.home_frame.short_url_list.remove(frame['short_url'].cget('text'))
                 self.update_scrollable_frame()
+
                 break
 
     # Update the scrollable frame everytime an item is added or removed
