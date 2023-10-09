@@ -13,8 +13,12 @@ This App is for social media enthusiast, digital marketer, or someone who freque
 [Wiki](https://github.com/clarencesarmiento/URLShortener/wiki)
 
 ## Screenshots
+### System Mode
+![System Mode](https://github.com/clarencesarmiento/URLShortener/blob/120721913c88fdd6dc66e3349e16fa11704cf49e/Images/SwiftShare%20Interface.png)
+![System Setting](https://github.com/clarencesarmiento/URLShortener/blob/08d7ba5be423205b20355c7ce6a797db17f29aa7/Images/system%20setting.png)
+
 ### Dark Mode
-![System Mode/Dark](https://github.com/clarencesarmiento/URLShortener/blob/120721913c88fdd6dc66e3349e16fa11704cf49e/Images/SwiftShare%20Interface.png)
+![Dark Mode](https://github.com/clarencesarmiento/URLShortener/blob/08d7ba5be423205b20355c7ce6a797db17f29aa7/Images/SwiftShare%20Interface-dark.png)
 
 ### Light Mode
 ![Light Mode](https://github.com/clarencesarmiento/URLShortener/blob/3bf480cb6514836178d6ce6e33f7c04e49000611/Images/SwiftShare%20Interface-light.png)
