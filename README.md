@@ -8,8 +8,8 @@ Shorten your URLs swiftly and share them effortlessly. Experience the joy of ins
 A Desktop Application that takes a long URL and returns a shortened version of the URL. It also enables user to generate and download a QR Code based on the shortened URL. 
 
 This App is for social media enthusiast, digital marketer, or someone who frequently shares link.
-## Documentation
 
+## Wiki
 [Wiki](https://github.com/clarencesarmiento/URLShortener/wiki)
 
 ## Screenshots
