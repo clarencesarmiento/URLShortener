@@ -10,7 +10,7 @@ A Desktop Application that takes a long URL and returns a shortened version of t
 This App is for social media enthusiast, digital marketer, or someone who frequently shares link.
 ## Documentation
 
-[Documentation](https://github.com/clarencesarmiento/URLShortener/wiki)
+[Wiki](https://github.com/clarencesarmiento/URLShortener/wiki)
 
 ## Screenshots
 ### Dark Mode
