@@ -1,10 +1,14 @@
-import customtkinter as ctk
+from datetime import datetime
 from tkinter import *
 from tkinter import filedialog, messagebox
-from PIL import Image
-import requests, os, qrcode, webbrowser, threading
 from urllib.parse import urlparse
-from datetime import datetime
+import customtkinter as ctk
+import os
+import qrcode
+import requests
+import threading
+import webbrowser
+from PIL import Image
 
 ctk.set_default_color_theme('blue')
 appWidth, appHeight = 650, 450
