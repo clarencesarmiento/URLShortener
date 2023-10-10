@@ -2,11 +2,8 @@ import customtkinter as ctk
 from tkinter import *
 from tkinter import filedialog, messagebox
 from PIL import Image
-import requests
-import os
+import requests, os, qrcode, webbrowser, threading
 from urllib.parse import urlparse
-import qrcode
-import webbrowser
 from datetime import datetime
 
 ctk.set_default_color_theme('blue')
@@ -196,7 +193,7 @@ class HomeFrame(ctk.CTkFrame):
 
         # Create Shorten Button
         self.shorten_button = ctk.CTkButton(self, text='Shorten URL', font=('helvetica', 12, 'bold'),
-                                            corner_radius=32, command=self.shorten_button_event)
+                                            corner_radius=32, command=self.on_click_shorten_button)
         self.shorten_button.grid(row=3, column=0, columnspan=2, padx=(0, 10), pady=10, sticky='e')
 
         # Create Button to Generate QR code for the shortened URL
@@ -262,6 +259,10 @@ class HomeFrame(ctk.CTkFrame):
                 self.history_frame.add_item_frame(url_name=urlparse(url_to_shorten).netloc, url_short=response.text)
                 self.short_url_list.append(response.text)
         return
+
+    def on_click_shorten_button(self):
+        thread = threading.Thread(target=self.shorten_button_event)
+        thread.start()
 
     # Create Generate QRCode Button Function
     def gen_qrcode_button_event(self):
