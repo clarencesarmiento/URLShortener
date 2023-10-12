@@ -9,7 +9,7 @@ A Desktop Application that takes a long URL and returns a shortened version of t
 
 This App is for social media enthusiast, digital marketer, or someone who frequently shares link.
 
-### [.exe](https://www.mediafire.com/file/30nupbjy9j3dj0u/YouTube-Downloader_V1.1.zip/file)
+### [.exe](https://www.mediafire.com/file/ci290fc96f7234i/swiftshare.zip/file)
 
 ## Wiki
 [Wiki](https://github.com/clarencesarmiento/URLShortener/wiki)
